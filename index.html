@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Activité Discord - Bonjour</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #7289da;
+      color: white;
+      flex-direction: column;
+    }
+    h1 {
+      font-size: 3em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Bonjour ! 👋</h1>
+  <p>Bienvenue dans mon activité Discord</p>
+
+  <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@latest"></script>
+  <script>
+    const { DiscordSDK } = window;
+    const discord = new DiscordSDK("TON_APPLICATION_ID_ICI");
+
+    async function start() {
+      await discord.ready();
+      console.log("Activité prête !");
+    }
+
+    start();
+  </script>
+</body>
+</html>
