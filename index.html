@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="discord-application-id" content="1170773879162159144">
-<title>🚀 Space Shooter Triangles</title>
+<title>🚀 Space Shooter Fluide</title>
 <style>
-  body { margin: 0; overflow: hidden; background: black; }
-  canvas { display: block; }
-  #score { position: absolute; top: 10px; left: 10px; color: white; font-family: Arial, sans-serif; font-size: 18px; }
-  #game-over { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 30px; text-align: center; display: none; }
-  #game-over button { margin-top: 20px; padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 10px; background-color: #27ae60; color: white; }
-  #game-over button:hover { background-color: #2ecc71; }
+  body { margin:0; overflow:hidden; background:black; }
+  canvas { display:block; }
+  #score { position:absolute; top:10px; left:10px; color:white; font-family:Arial,sans-serif; font-size:18px; }
+  #game-over { position:absolute; top:40%; left:50%; transform:translate(-50%, -50%); color:white; font-size:30px; text-align:center; display:none; }
+  #game-over button { margin-top:20px; padding:10px 20px; font-size:16px; cursor:pointer; border:none; border-radius:10px; background-color:#27ae60; color:white; }
+  #game-over button:hover { background-color:#2ecc71; }
 </style>
 </head>
 <body>
@@ -29,41 +29,65 @@ const ctx = canvas.getContext('2d');
 let width = canvas.width = window.innerWidth;
 let height = canvas.height = window.innerHeight;
 
-let player = {x: width/2, y: height-50, size: 20};
+// Joueur
+let player = {x: width/2, y: height-50, size:20, speed:0, maxSpeed:10, acc:0.5};
 let bullets = [];
 let enemies = [];
 let score = 0;
 let gameOver = false;
-const speed = 7;
 
-// Contrôle
-document.addEventListener('keydown', e => {
-  if(gameOver) return;
-  if(e.key==='ArrowLeft') player.x -= speed;
-  if(e.key==='ArrowRight') player.x += speed;
-  if(e.key===' ') bullets.push({x: player.x, y: player.y-10, size:5});
-  if(player.x < 0) player.x=0;
-  if(player.x > width) player.x=width;
+// Touches
+let keys = { left:false, right:false, shoot:false };
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') keys.left=true;
+  if(e.key==='ArrowRight') keys.right=true;
+  if(e.key===' ') keys.shoot=true;
+});
+document.addEventListener('keyup', e=>{
+  if(e.key==='ArrowLeft') keys.left=false;
+  if(e.key==='ArrowRight') keys.right=false;
+  if(e.key===' ') keys.shoot=false;
 });
 
-// Spawn ennemis
+// Tir automatique
+let shootCooldown=0;
+
+// Ennemis
 function spawnEnemy() {
   if(gameOver) return;
   const x = Math.random()*(width-20)+10;
-  enemies.push({x: x, y: -20, size: 20});
+  enemies.push({x:x, y:-20, size:20});
 }
-setInterval(spawnEnemy, 1000);
+setInterval(spawnEnemy, 800);
 
-// Boucle
+// Boucle principale
 function gameLoop() {
   if(gameOver) return;
 
-  // Fond noir
-  ctx.fillStyle = 'black';
+  ctx.fillStyle='black';
   ctx.fillRect(0,0,width,height);
 
-  // Joueur
-  ctx.fillStyle = 'red';
+  // Mouvement joueur avec accélération
+  if(keys.left) player.speed -= player.acc;
+  if(keys.right) player.speed += player.acc;
+  // Limite vitesse
+  if(player.speed > player.maxSpeed) player.speed = player.maxSpeed;
+  if(player.speed < -player.maxSpeed) player.speed = -player.maxSpeed;
+  // Friction
+  player.speed *= 0.9;
+  player.x += player.speed;
+  if(player.x<0) player.x=0;
+  if(player.x>width) player.x=width;
+
+  // Tir
+  shootCooldown--;
+  if(keys.shoot && shootCooldown<=0){
+    bullets.push({x:player.x, y:player.y-10, size:5});
+    shootCooldown=10; // cadence de tir
+  }
+
+  // Dessin joueur
+  ctx.fillStyle='red';
   ctx.beginPath();
   ctx.moveTo(player.x, player.y-player.size);
   ctx.lineTo(player.x-player.size, player.y+player.size);
@@ -72,17 +96,17 @@ function gameLoop() {
   ctx.fill();
 
   // Tirs
-  ctx.fillStyle = 'yellow';
+  ctx.fillStyle='yellow';
   bullets.forEach((b,i)=>{
     ctx.beginPath();
     ctx.arc(b.x,b.y,b.size,0,Math.PI*2);
     ctx.fill();
-    b.y -= 10;
-    if(b.y < 0) bullets.splice(i,1);
+    b.y -= 15;
+    if(b.y<0) bullets.splice(i,1);
   });
 
   // Ennemis
-  ctx.fillStyle = 'lime';
+  ctx.fillStyle='lime';
   enemies.forEach((e,i)=>{
     ctx.beginPath();
     ctx.moveTo(e.x,e.y-e.size);
@@ -90,9 +114,9 @@ function gameLoop() {
     ctx.lineTo(e.x+e.size,e.y+e.size);
     ctx.closePath();
     ctx.fill();
-    e.y += 3;
+    e.y += 4;
 
-    // Collision avec balle
+    // Collision balle
     bullets.forEach((b,j)=>{
       if(Math.abs(b.x-e.x)<e.size && Math.abs(b.y-e.y)<e.size){
         bullets.splice(j,1);
@@ -102,12 +126,12 @@ function gameLoop() {
       }
     });
 
-    // Collision avec joueur
-    if(Math.abs(player.x - e.x) < e.size && Math.abs(player.y - e.y) < e.size){
+    // Collision joueur
+    if(Math.abs(player.x-e.x)<e.size && Math.abs(player.y-e.y)<e.size){
       endGame();
     }
 
-    if(e.y > height) enemies.splice(i,1);
+    if(e.y>height) enemies.splice(i,1);
   });
 
   requestAnimationFrame(gameLoop);
@@ -115,24 +139,22 @@ function gameLoop() {
 gameLoop();
 
 function endGame(){
-  gameOver = true;
+  gameOver=true;
   document.getElementById('game-over').style.display='block';
 }
 
 function restartGame(){
-  gameOver = false;
-  bullets=[];
-  enemies=[];
-  score=0;
-  document.getElementById('score').textContent='Score : 0';
+  gameOver=false;
+  bullets=[]; enemies=[];
+  score=0; document.getElementById('score').textContent='Score : 0';
   document.getElementById('game-over').style.display='none';
-  player.x = width/2;
+  player.x=width/2; player.speed=0;
   gameLoop();
 }
 
 window.addEventListener('resize', ()=>{
-  width = canvas.width = window.innerWidth;
-  height = canvas.height = window.innerHeight;
+  width=canvas.width=window.innerWidth;
+  height=canvas.height=window.innerHeight;
 });
 </script>
 </body>
