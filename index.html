@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Mini Jeu Discord</title>
   <style>
     body {
@@ -10,7 +10,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background-color: #7289da;
+      background-color: #5865f2;
       color: white;
       font-family: Arial, sans-serif;
       text-align: center;
@@ -22,8 +22,8 @@
       cursor: pointer;
       border: none;
       border-radius: 10px;
-      background-color: #ffffff;
-      color: #7289da;
+      background-color: white;
+      color: #5865f2;
       transition: transform 0.1s;
     }
     button:active {
@@ -37,7 +37,24 @@
   <button id="startBtn">Commencer</button>
   <p id="message"></p>
 
+  <!-- SDK officiel de Discord -->
+  <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@latest"></script>
+
   <script>
+    const { DiscordSDK } = window;
+
+    // ⚠️ METS ICI TON APPLICATION ID
+    const discord = new DiscordSDK("1170773879162159144");
+
+    async function initDiscord() {
+      console.log("Connexion au SDK Discord...");
+      await discord.ready(); // Initialise la connexion
+      console.log("Activité Discord prête !");
+    }
+
+    initDiscord();
+
+    // Jeu de réaction rapide
     const startBtn = document.getElementById("startBtn");
     const message = document.getElementById("message");
     let waitingForClick = false;
@@ -47,12 +64,11 @@
       return Math.random() * (max - min) + min;
     }
 
-    // Fonction pour lancer le jeu
     function startGame() {
       startBtn.disabled = true;
       message.textContent = "Prépare-toi...";
       startBtn.textContent = "Attends...";
-      const delay = randomDelay(1000, 3000); // 1 à 3 secondes aléatoire
+      const delay = randomDelay(1000, 3000);
 
       setTimeout(() => {
         message.textContent = "Clique maintenant !";
@@ -63,10 +79,9 @@
       }, delay);
     }
 
-    // Quand on clique sur le bouton
     startBtn.addEventListener("click", () => {
       if (!waitingForClick) {
-        startGame(); // si on clique pour démarrer
+        startGame();
       } else {
         const reactionTime = Date.now() - startTime;
         message.textContent = `Bravo ! Ton temps de réaction : ${reactionTime} ms`;
