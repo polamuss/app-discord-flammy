@@ -1,94 +1,201 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Mini Jeu Discord</title>
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #5865f2;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-    }
-    button {
-      padding: 20px 40px;
-      font-size: 1.5em;
-      margin-top: 20px;
-      cursor: pointer;
-      border: none;
-      border-radius: 10px;
-      background-color: white;
-      color: #5865f2;
-      transition: transform 0.1s;
-    }
-    button:active {
-      transform: scale(0.95);
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Mets ici ton Application ID Discord -->
+<meta name="discord-application-id" content="1170773879162159144">
+<title>🚀 Space Blaster</title>
+<style>
+  body {
+    background: radial-gradient(circle at center, #000010 0%, #000 100%);
+    overflow: hidden;
+    margin: 0;
+    height: 100vh;
+    color: white;
+    font-family: "Consolas", monospace;
+  }
+  #game {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .player {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 50px;
+    background: url('https://upload.wikimedia.org/wikipedia/commons/3/3a/Space_ship_icon.svg') no-repeat center/contain;
+  }
+  .bullet {
+    position: absolute;
+    width: 4px;
+    height: 10px;
+    background: #0ff;
+  }
+  .enemy {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: url('https://upload.wikimedia.org/wikipedia/commons/0/0a/Invader_2.png') no-repeat center/contain;
+  }
+  #score {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 18px;
+  }
+  #game-over {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 40px;
+    display: none;
+    text-align: center;
+  }
+  #game-over button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+    background-color: #27ae60;
+    color: white;
+  }
+  #game-over button:hover {
+    background-color: #2ecc71;
+  }
+</style>
 </head>
 <body>
-  <h1>Mini Jeu Discord</h1>
-  <p>Appuie sur le bouton le plus vite possible quand il apparaît !</p>
-  <button id="startBtn">Commencer</button>
-  <p id="message"></p>
 
-  <!-- SDK officiel de Discord -->
-  <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@latest"></script>
+<div id="game">
+  <div class="player" id="player"></div>
+  <div id="score">Score : 0</div>
+  <div id="game-over">
+    💥 GAME OVER 💥<br>
+    <button onclick="restartGame()">Rejouer</button>
+  </div>
+</div>
 
-  <script>
-    const { DiscordSDK } = window;
+<script>
+const game = document.getElementById('game');
+const player = document.getElementById('player');
+const scoreDisplay = document.getElementById('score');
+const gameOverScreen = document.getElementById('game-over');
 
-    // ⚠️ METS ICI TON APPLICATION ID
-    const discord = new DiscordSDK("1170773879162159144");
+let score = 0;
+let bullets = [];
+let enemies = [];
+let gameOver = false;
 
-    async function initDiscord() {
-      console.log("Connexion au SDK Discord...");
-      await discord.ready(); // Initialise la connexion
-      console.log("Activité Discord prête !");
+// Position initiale
+let playerX = window.innerWidth / 2 - 25;
+const speed = 7;
+
+// Déplacements et tirs
+document.addEventListener('keydown', (e) => {
+  if (gameOver) return;
+  if (e.key === 'ArrowLeft' && playerX > 0) playerX -= speed * 2;
+  if (e.key === 'ArrowRight' && playerX < window.innerWidth - 60) playerX += speed * 2;
+  if (e.key === ' ') shoot();
+  player.style.left = playerX + 'px';
+});
+
+// Tir
+function shoot() {
+  const bullet = document.createElement('div');
+  bullet.classList.add('bullet');
+  bullet.style.left = playerX + 23 + 'px';
+  bullet.style.bottom = '70px';
+  game.appendChild(bullet);
+  bullets.push(bullet);
+}
+
+// Apparition des ennemis
+function spawnEnemy() {
+  if (gameOver) return;
+  const enemy = document.createElement('div');
+  enemy.classList.add('enemy');
+  enemy.style.left = Math.random() * (window.innerWidth - 40) + 'px';
+  enemy.style.top = '0px';
+  game.appendChild(enemy);
+  enemies.push(enemy);
+}
+setInterval(spawnEnemy, 1000);
+
+// Boucle principale
+function gameLoop() {
+  if (gameOver) return;
+
+  // Déplacement balles
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    let b = bullets[i];
+    b.style.bottom = parseInt(b.style.bottom) + 10 + 'px';
+    if (parseInt(b.style.bottom) > window.innerHeight) {
+      b.remove();
+      bullets.splice(i, 1);
+    }
+  }
+
+  // Déplacement ennemis
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    let e = enemies[i];
+    e.style.top = parseInt(e.style.top) + 3 + 'px';
+    if (parseInt(e.style.top) > window.innerHeight - 60) {
+      endGame();
     }
 
-    initDiscord();
-
-    // Jeu de réaction rapide
-    const startBtn = document.getElementById("startBtn");
-    const message = document.getElementById("message");
-    let waitingForClick = false;
-    let startTime;
-
-    function randomDelay(min, max) {
-      return Math.random() * (max - min) + min;
-    }
-
-    function startGame() {
-      startBtn.disabled = true;
-      message.textContent = "Prépare-toi...";
-      startBtn.textContent = "Attends...";
-      const delay = randomDelay(1000, 3000);
-
-      setTimeout(() => {
-        message.textContent = "Clique maintenant !";
-        startTime = Date.now();
-        waitingForClick = true;
-        startBtn.disabled = false;
-        startBtn.textContent = "Cliqueeeee !";
-      }, delay);
-    }
-
-    startBtn.addEventListener("click", () => {
-      if (!waitingForClick) {
-        startGame();
-      } else {
-        const reactionTime = Date.now() - startTime;
-        message.textContent = `Bravo ! Ton temps de réaction : ${reactionTime} ms`;
-        waitingForClick = false;
-        startBtn.textContent = "Rejouer";
+    // Collision balle-ennemi
+    for (let j = bullets.length - 1; j >= 0; j--) {
+      const b = bullets[j];
+      const bRect = b.getBoundingClientRect();
+      const eRect = e.getBoundingClientRect();
+      if (
+        bRect.left < eRect.right &&
+        bRect.right > eRect.left &&
+        bRect.top < eRect.bottom &&
+        bRect.bottom > eRect.top
+      ) {
+        e.remove();
+        enemies.splice(i, 1);
+        b.remove();
+        bullets.splice(j, 1);
+        score++;
+        scoreDisplay.textContent = 'Score : ' + score;
+        break;
       }
-    });
-  </script>
+    }
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+gameLoop();
+
+// Fin du jeu
+function endGame() {
+  gameOver = true;
+  enemies.forEach(e => e.remove());
+  bullets.forEach(b => b.remove());
+  gameOverScreen.style.display = 'block';
+}
+
+// Rejouer
+function restartGame() {
+  gameOver = false;
+  score = 0;
+  scoreDisplay.textContent = 'Score : 0';
+  gameOverScreen.style.display = 'none';
+  enemies = [];
+  bullets = [];
+  gameLoop();
+}
+</script>
+
 </body>
 </html>
