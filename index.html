@@ -3,24 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- Mets ici ton Application ID Discord -->
 <meta name="discord-application-id" content="1170773879162159144">
-<title>🚀 Space Blaster</title>
+<title>🚀 Space Blaster Coloré</title>
 <style>
   body {
-    background: radial-gradient(circle at center, #000010 0%, #000 100%);
-    overflow: hidden;
     margin: 0;
-    height: 100vh;
+    overflow: hidden;
+    background: black;
+    font-family: Arial, sans-serif;
     color: white;
-    font-family: "Consolas", monospace;
   }
+
   #game {
     position: relative;
     width: 100%;
     height: 100vh;
     overflow: hidden;
   }
+
+  .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    border-radius: 50%;
+  }
+
   .player {
     position: absolute;
     bottom: 20px;
@@ -28,26 +36,32 @@
     transform: translateX(-50%);
     width: 50px;
     height: 50px;
-    background: url('https://upload.wikimedia.org/wikipedia/commons/3/3a/Space_ship_icon.svg') no-repeat center/contain;
+    background: red;
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
   }
+
   .bullet {
     position: absolute;
-    width: 4px;
+    width: 5px;
     height: 10px;
-    background: #0ff;
+    background: yellow;
   }
+
   .enemy {
     position: absolute;
     width: 40px;
     height: 40px;
-    background: url('https://upload.wikimedia.org/wikipedia/commons/0/0a/Invader_2.png') no-repeat center/contain;
+    background: lime;
+    border-radius: 50%;
   }
+
   #score {
     position: absolute;
     top: 10px;
     left: 10px;
     font-size: 18px;
   }
+
   #game-over {
     position: absolute;
     top: 45%;
@@ -57,6 +71,7 @@
     display: none;
     text-align: center;
   }
+
   #game-over button {
     margin-top: 20px;
     padding: 10px 20px;
@@ -67,13 +82,13 @@
     background-color: #27ae60;
     color: white;
   }
+
   #game-over button:hover {
     background-color: #2ecc71;
   }
 </style>
 </head>
 <body>
-
 <div id="game">
   <div class="player" id="player"></div>
   <div id="score">Score : 0</div>
@@ -93,109 +108,103 @@ let score = 0;
 let bullets = [];
 let enemies = [];
 let gameOver = false;
-
-// Position initiale
 let playerX = window.innerWidth / 2 - 25;
 const speed = 7;
 
-// Déplacements et tirs
-document.addEventListener('keydown', (e) => {
-  if (gameOver) return;
-  if (e.key === 'ArrowLeft' && playerX > 0) playerX -= speed * 2;
-  if (e.key === 'ArrowRight' && playerX < window.innerWidth - 60) playerX += speed * 2;
-  if (e.key === ' ') shoot();
-  player.style.left = playerX + 'px';
+// Création étoiles
+for(let i=0;i<100;i++){
+  const star=document.createElement('div');
+  star.classList.add('star');
+  star.style.left=Math.random()*window.innerWidth+'px';
+  star.style.top=Math.random()*window.innerHeight+'px';
+  game.appendChild(star);
+}
+
+// Contrôle joueur
+document.addEventListener('keydown',(e)=>{
+  if(gameOver) return;
+  if(e.key==='ArrowLeft' && playerX>0) playerX-=speed*2;
+  if(e.key==='ArrowRight' && playerX<window.innerWidth-50) playerX+=speed*2;
+  if(e.key===' ') shoot();
+  player.style.left=playerX+'px';
 });
 
-// Tir
-function shoot() {
-  const bullet = document.createElement('div');
+function shoot(){
+  const bullet=document.createElement('div');
   bullet.classList.add('bullet');
-  bullet.style.left = playerX + 23 + 'px';
-  bullet.style.bottom = '70px';
+  bullet.style.left=playerX+22+'px';
+  bullet.style.bottom='70px';
   game.appendChild(bullet);
   bullets.push(bullet);
 }
 
-// Apparition des ennemis
-function spawnEnemy() {
-  if (gameOver) return;
-  const enemy = document.createElement('div');
+// Ennemis
+function spawnEnemy(){
+  if(gameOver) return;
+  const enemy=document.createElement('div');
   enemy.classList.add('enemy');
-  enemy.style.left = Math.random() * (window.innerWidth - 40) + 'px';
-  enemy.style.top = '0px';
+  enemy.style.left=Math.random()*(window.innerWidth-40)+'px';
+  enemy.style.top='0px';
   game.appendChild(enemy);
   enemies.push(enemy);
 }
-setInterval(spawnEnemy, 1000);
+setInterval(spawnEnemy,1000);
 
-// Boucle principale
-function gameLoop() {
-  if (gameOver) return;
+// Boucle
+function gameLoop(){
+  if(gameOver) return;
 
-  // Déplacement balles
-  for (let i = bullets.length - 1; i >= 0; i--) {
-    let b = bullets[i];
-    b.style.bottom = parseInt(b.style.bottom) + 10 + 'px';
-    if (parseInt(b.style.bottom) > window.innerHeight) {
-      b.remove();
-      bullets.splice(i, 1);
-    }
-  }
+  bullets.forEach((b,i)=>{
+    b.style.bottom=parseInt(b.style.bottom)+10+'px';
+    if(parseInt(b.style.bottom)>window.innerHeight){b.remove();bullets.splice(i,1);}
+  });
 
-  // Déplacement ennemis
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    let e = enemies[i];
-    e.style.top = parseInt(e.style.top) + 3 + 'px';
-    if (parseInt(e.style.top) > window.innerHeight - 60) {
-      endGame();
-    }
+  enemies.forEach((e,i)=>{
+    e.style.top=parseInt(e.style.top)+3+'px';
+    if(parseInt(e.style.top)>window.innerHeight-50) endGame();
 
-    // Collision balle-ennemi
-    for (let j = bullets.length - 1; j >= 0; j--) {
-      const b = bullets[j];
-      const bRect = b.getBoundingClientRect();
-      const eRect = e.getBoundingClientRect();
-      if (
-        bRect.left < eRect.right &&
-        bRect.right > eRect.left &&
-        bRect.top < eRect.bottom &&
-        bRect.bottom > eRect.top
-      ) {
-        e.remove();
-        enemies.splice(i, 1);
-        b.remove();
-        bullets.splice(j, 1);
-        score++;
-        scoreDisplay.textContent = 'Score : ' + score;
-        break;
+    bullets.forEach((b,j)=>{
+      const bRect=b.getBoundingClientRect();
+      const eRect=e.getBoundingClientRect();
+      if(bRect.left<eRect.right && bRect.right>eRect.left && bRect.top<eRect.bottom && bRect.bottom>eRect.top){
+        // Explosion visuelle simple
+        const explosion=document.createElement('div');
+        explosion.style.position='absolute';
+        explosion.style.width='20px';
+        explosion.style.height='20px';
+        explosion.style.background='orange';
+        explosion.style.borderRadius='50%';
+        explosion.style.left=eRect.left+'px';
+        explosion.style.top=eRect.top+'px';
+        game.appendChild(explosion);
+        setTimeout(()=>explosion.remove(),200);
+
+        e.remove();enemies.splice(i,1);
+        b.remove();bullets.splice(j,1);
+        score++;scoreDisplay.textContent='Score : '+score;
       }
-    }
-  }
+    });
+  });
 
   requestAnimationFrame(gameLoop);
 }
 gameLoop();
 
-// Fin du jeu
-function endGame() {
-  gameOver = true;
-  enemies.forEach(e => e.remove());
-  bullets.forEach(b => b.remove());
-  gameOverScreen.style.display = 'block';
+// Game Over
+function endGame(){
+  gameOver=true;
+  enemies.forEach(e=>e.remove());
+  bullets.forEach(b=>b.remove());
+  gameOverScreen.style.display='block';
 }
 
 // Rejouer
-function restartGame() {
-  gameOver = false;
-  score = 0;
-  scoreDisplay.textContent = 'Score : 0';
-  gameOverScreen.style.display = 'none';
-  enemies = [];
-  bullets = [];
+function restartGame(){
+  gameOver=false;score=0;scoreDisplay.textContent='Score : 0';
+  gameOverScreen.style.display='none';
+  enemies=[];bullets=[];
   gameLoop();
 }
 </script>
-
 </body>
 </html>
